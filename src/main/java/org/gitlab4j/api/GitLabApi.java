@@ -94,6 +94,8 @@ public class GitLabApi implements AutoCloseable {
     private SystemHooksApi systemHooksApi;
     private TagsApi tagsApi;
     private TodosApi todosApi;
+
+    private TopicApi topicApi;
     private UserApi userApi;
     private WikisApi wikisApi;
     private KeysApi keysApi;
@@ -1646,6 +1648,23 @@ public class GitLabApi implements AutoCloseable {
         }
 
         return todosApi;
+    }
+
+    /**
+     * Gets the TopicApi instance owned by this GitLabApi instance. The TopicApi is used to perform all Topic related API calls.
+     *
+     * @return the TopicApi instance owned by this GitLabApi instance
+     */
+    public TopicApi getTopicApi() {
+        if (topicApi == null) {
+            synchronized (this) {
+                if (topicApi == null) {
+                    topicApi = new TopicApi(this);
+                }
+            }
+        }
+
+        return topicApi;
     }
 
     /**
