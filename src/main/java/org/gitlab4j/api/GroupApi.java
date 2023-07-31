@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.ws.rs.core.Form;
@@ -347,6 +348,50 @@ public class GroupApi extends AbstractApi {
     public Stream<Group> getSubGroupsStream(Object groupIdOrPath, List<Integer> skipGroups, Boolean allAvailable, String search,
             GroupOrderBy orderBy, SortOrder sortOrder, Boolean statistics, Boolean owned) throws GitLabApiException {
         return (getSubGroups(groupIdOrPath, skipGroups, allAvailable, search, orderBy, sortOrder, statistics, owned, getDefaultPerPage()).stream());
+    }
+
+    /**
+     * Get a list of visible descendant groups of a given group for the authenticated user using the provided filter.
+     *
+     * <pre><code>GitLab Endpoint: GET /groups/:id/descendant_groups</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path, required
+     * @param filter the GroupFilter to match against
+     * @return a List&lt;Group&gt; of the matching groups
+     * @throws GitLabApiException if any exception occurs
+     */
+    public List<Group> getDescendantGroups(Object groupIdOrPath, GroupFilter filter) throws GitLabApiException {
+        return (getDescendantGroups(groupIdOrPath, filter, getDefaultPerPage()).all());
+    }
+
+    /**
+     * Get a Pager of visible descendant groups of a given group for the authenticated user using the provided filter.
+     *
+     * <pre><code>GitLab Endpoint: GET /groups/:id/descendant_groups</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path, required
+     * @param filter the GroupFilter to match against
+     * @param itemsPerPage the number of Group instances that will be fetched per page
+     * @return a Pager containing matching Group instances
+     * @throws GitLabApiException if any exception occurs
+     */
+    public Pager<Group> getDescendantGroups(Object groupIdOrPath, GroupFilter filter, int itemsPerPage) throws GitLabApiException {
+        GitLabApiForm formData = filter.getQueryParams();
+        return (new Pager<Group>(this, Group.class, itemsPerPage, formData.asMap(), "groups", getGroupIdOrPath(groupIdOrPath), "descendant_groups"));
+    }
+
+    /**
+     * Get a Stream of visible descendant groups of a given group for the authenticated user using the provided filter.
+     *
+     * <pre><code>GitLab Endpoint: GET /groups/:id/descendant_groups</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path, required
+     * @param filter the GroupFilter to match against
+     * @return a Stream&lt;Group&gt; of the matching groups
+     * @throws GitLabApiException if any exception occurs
+     */
+    public Stream<Group> getDescendantGroupsStream(Object groupIdOrPath, GroupFilter filter) throws GitLabApiException {
+        return (getDescendantGroups(groupIdOrPath, filter, getDefaultPerPage()).stream());
     }
 
     /**
@@ -1572,8 +1617,23 @@ public class GroupApi extends AbstractApi {
      * @throws GitLabApiException if any exception occurs
      */
     public List<Badge> getBadges(Object groupIdOrPath) throws GitLabApiException {
-	Response response = get(Response.Status.OK, null, "groups", getGroupIdOrPath(groupIdOrPath), "badges");
-	return (response.readEntity(new GenericType<List<Badge>>() {}));
+    return getBadges(groupIdOrPath, null);
+    }
+
+    /**
+     * Gets a list of a group’s badges, case-sensitively filtered on bagdeName if non-null.
+     *
+     * <pre><code>GitLab Endpoint: GET /groups/:id/badges?name=:name</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path
+     * @param badgeName The name to filter on (case-sensitive), ignored if null.
+     * @return All badges of the GitLab item, case insensitively filtered on name.
+     * @throws GitLabApiException If any problem is encountered
+     */
+    public List<Badge> getBadges(Object groupIdOrPath, String badgeName) throws GitLabApiException {
+    Form queryParam = new GitLabApiForm().withParam("name", badgeName);
+    Response response = get(Response.Status.OK, queryParam.asMap(), "groups", getGroupIdOrPath(groupIdOrPath), "badges");
+    return (response.readEntity(new GenericType<List<Badge>>() {}));
     }
 
     /**
@@ -1620,11 +1680,28 @@ public class GroupApi extends AbstractApi {
      * @throws GitLabApiException if any exception occurs
      */
     public Badge addBadge(Object groupIdOrPath, String linkUrl, String imageUrl) throws GitLabApiException {
-	GitLabApiForm formData = new GitLabApiForm()
-		.withParam("link_url", linkUrl, true)
-		.withParam("image_url", imageUrl, true);
-	Response response = post(Response.Status.OK, formData, "groups", getGroupIdOrPath(groupIdOrPath), "badges");
-	return (response.readEntity(Badge.class));
+    return addBadge(groupIdOrPath, null, linkUrl, imageUrl);
+    }
+
+    /**
+     * Add a badge to a group.
+     *
+     * <pre><code>GitLab Endpoint: POST /groups/:id/badges</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path
+     * @param name The name to give the badge (may be null)
+     * @param linkUrl the URL of the badge link
+     * @param imageUrl the URL of the image link
+     * @return A Badge instance for the added badge
+     * @throws GitLabApiException if any exception occurs
+     */
+    public Badge addBadge(Object groupIdOrPath, String name, String linkUrl, String imageUrl) throws GitLabApiException {
+    GitLabApiForm formData = new GitLabApiForm()
+        .withParam("name", name, false)
+        .withParam("link_url", linkUrl, true)
+        .withParam("image_url", imageUrl, true);
+    Response response = post(Response.Status.OK, formData, "groups", getGroupIdOrPath(groupIdOrPath), "badges");
+    return (response.readEntity(Badge.class));
     }
 
     /**
@@ -1640,11 +1717,29 @@ public class GroupApi extends AbstractApi {
      * @throws GitLabApiException if any exception occurs
      */
     public Badge editBadge(Object groupIdOrPath, Long badgeId, String linkUrl, String imageUrl) throws GitLabApiException {
-	GitLabApiForm formData = new GitLabApiForm()
-		.withParam("link_url", linkUrl, false)
-		.withParam("image_url", imageUrl, false);
-	Response response = putWithFormData(Response.Status.OK, formData, "groups", getGroupIdOrPath(groupIdOrPath), "badges", badgeId);
-	return (response.readEntity(Badge.class));
+    return (editBadge(groupIdOrPath, badgeId, null, linkUrl, imageUrl));
+    }
+
+    /**
+     * Edit a badge of a group.
+     *
+     * <pre><code>GitLab Endpoint: PUT /groups/:id/badges</code></pre>
+     *
+     * @param groupIdOrPath the group ID, path of the group, or a Group instance holding the group ID or path
+     * @param badgeId the ID of the badge to edit
+     * @param name The name of the badge to edit (may be null)
+     * @param linkUrl the URL of the badge link
+     * @param imageUrl the URL of the image link
+     * @return a Badge instance for the edited badge
+     * @throws GitLabApiException if any exception occurs
+     */
+    public Badge editBadge(Object groupIdOrPath, Long badgeId, String name, String linkUrl, String imageUrl) throws GitLabApiException {
+    GitLabApiForm formData = new GitLabApiForm()
+        .withParam("name", name, false)
+        .withParam("link_url", linkUrl, false)
+        .withParam("image_url", imageUrl, false);
+    Response response = putWithFormData(Response.Status.OK, formData, "groups", getGroupIdOrPath(groupIdOrPath), "badges", badgeId);
+    return (response.readEntity(Badge.class));
     }
 
     /**

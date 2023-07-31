@@ -45,12 +45,14 @@ import org.gitlab4j.api.models.Badge;
 import org.gitlab4j.api.models.Blame;
 import org.gitlab4j.api.models.Board;
 import org.gitlab4j.api.models.Branch;
+import org.gitlab4j.api.models.ChildEpic;
 import org.gitlab4j.api.models.Comment;
 import org.gitlab4j.api.models.Commit;
 import org.gitlab4j.api.models.CommitPayload;
 import org.gitlab4j.api.models.CommitStatus;
 import org.gitlab4j.api.models.CompareResults;
 import org.gitlab4j.api.models.Contributor;
+import org.gitlab4j.api.models.CreatedChildEpic;
 import org.gitlab4j.api.models.DeployKey;
 import org.gitlab4j.api.models.DeployToken;
 import org.gitlab4j.api.models.Deployment;
@@ -60,8 +62,12 @@ import org.gitlab4j.api.models.Email;
 import org.gitlab4j.api.models.Environment;
 import org.gitlab4j.api.models.Epic;
 import org.gitlab4j.api.models.EpicIssue;
+import org.gitlab4j.api.models.EpicIssueLink;
 import org.gitlab4j.api.models.Event;
 import org.gitlab4j.api.models.ExportStatus;
+import org.gitlab4j.api.models.ExternalStatusCheck;
+import org.gitlab4j.api.models.ExternalStatusCheckResult;
+import org.gitlab4j.api.models.ExternalStatusCheckStatus;
 import org.gitlab4j.api.models.FileUpload;
 import org.gitlab4j.api.models.GpgSignature;
 import org.gitlab4j.api.models.Group;
@@ -75,9 +81,11 @@ import org.gitlab4j.api.models.Job;
 import org.gitlab4j.api.models.Key;
 import org.gitlab4j.api.models.Label;
 import org.gitlab4j.api.models.LabelEvent;
+import org.gitlab4j.api.models.Link;
 import org.gitlab4j.api.models.Member;
 import org.gitlab4j.api.models.MergeRequest;
 import org.gitlab4j.api.models.MergeRequestDiff;
+import org.gitlab4j.api.models.MergeRequestVersion;
 import org.gitlab4j.api.models.Milestone;
 import org.gitlab4j.api.models.Note;
 import org.gitlab4j.api.models.NotificationSettings;
@@ -89,12 +97,15 @@ import org.gitlab4j.api.models.PipelineSchedule;
 import org.gitlab4j.api.models.Project;
 import org.gitlab4j.api.models.ProjectApprovalsConfig;
 import org.gitlab4j.api.models.ProjectFetches;
+import org.gitlab4j.api.models.ProjectGroup;
 import org.gitlab4j.api.models.ProjectHook;
 import org.gitlab4j.api.models.ProjectUser;
 import org.gitlab4j.api.models.ProtectedBranch;
 import org.gitlab4j.api.models.ProtectedTag;
 import org.gitlab4j.api.models.PushRules;
 import org.gitlab4j.api.models.RegistryRepository;
+import org.gitlab4j.api.models.RelatedEpic;
+import org.gitlab4j.api.models.RelatedEpicLink;
 import org.gitlab4j.api.models.Release;
 import org.gitlab4j.api.models.RemoteMirror;
 import org.gitlab4j.api.models.RepositoryFile;
@@ -112,6 +123,7 @@ import org.gitlab4j.api.models.User;
 import org.gitlab4j.api.models.Variable;
 import org.gitlab4j.api.services.JiraService;
 import org.gitlab4j.api.services.SlackService;
+import org.gitlab4j.api.webhook.ExternalStatusCheckEvent;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -168,6 +180,18 @@ public class TestGitLabApiBeans {
 
         branch = unmarshalResource(Branch.class, "bad-branch.json");
         assertTrue(!Branch.isValid(branch));
+    }
+
+    @Test
+    public void testCreatedChildEpic() throws Exception {
+        CreatedChildEpic childEpic = unmarshalResource(CreatedChildEpic.class, "created-child-epic.json");
+        assertTrue(compareJson(childEpic, "created-child-epic.json"));
+    }
+
+    @Test
+    public void testChildEpic() throws Exception {
+        ChildEpic childEpic = unmarshalResource(ChildEpic.class, "child-epic.json");
+        assertTrue(compareJson(childEpic, "child-epic.json"));
     }
 
     @Test
@@ -249,6 +273,12 @@ public class TestGitLabApiBeans {
     }
 
     @Test
+    public void testEpicIssueLink() throws Exception {
+        EpicIssueLink epicIssueLink = unmarshalResource(EpicIssueLink.class, "epic-issue-link.json");
+        assertTrue(compareJson(epicIssueLink, "epic-issue-link.json"));
+    }
+
+    @Test
     public void testEvent() throws Exception {
         Event event = unmarshalResource(Event.class, "event.json");
         assertTrue(compareJson(event, "event.json"));
@@ -264,6 +294,30 @@ public class TestGitLabApiBeans {
     public void testExportStatus() throws Exception {
         ExportStatus exportStatus = unmarshalResource(ExportStatus.class, "export-status.json");
         assertTrue(compareJson(exportStatus, "export-status.json"));
+    }
+
+    @Test
+    public void testExternalStatusChecks() throws Exception {
+        List<ExternalStatusCheck> externalStatusChecks = unmarshalResourceList(ExternalStatusCheck.class, "external-status-checks.json");
+        assertTrue(compareJson(externalStatusChecks, "external-status-checks.json"));
+    }
+
+    @Test
+    public void testExternalStatusCheckEvent() throws Exception {
+        ExternalStatusCheckEvent externalStatusCheckEvent = unmarshalResource(ExternalStatusCheckEvent.class, "external-status-check-event.json");
+        assertTrue(compareJson(externalStatusCheckEvent, "external-status-check-event.json"));
+    }
+
+    @Test
+    public void testExternalStatusCheckResult() throws Exception {
+        ExternalStatusCheckResult externalStatusCheckResult = unmarshalResource(ExternalStatusCheckResult.class, "external-status-check-result.json");
+        assertTrue(compareJson(externalStatusCheckResult, "external-status-check-result.json"));
+    }
+
+    @Test
+    public void testExternalStatusCheckStatuses() throws Exception {
+        List<ExternalStatusCheckStatus> externalStatusCheckStatuses = unmarshalResourceList(ExternalStatusCheckStatus.class, "external-status-check-statuses.json");
+        assertTrue(compareJson(externalStatusCheckStatuses, "external-status-check-statuses.json"));
     }
 
     @Test
@@ -342,6 +396,12 @@ public class TestGitLabApiBeans {
     public void testLinkedIssues() throws Exception {
         List<Issue> linkedIssues = unmarshalResourceList(Issue.class, "linked-issues.json");
         assertTrue(compareJson(linkedIssues, "linked-issues.json"));
+    }
+
+    @Test
+    public void testLinks() throws Exception {
+        List<Link> links = unmarshalResourceList(Link.class, "links.json");
+        assertTrue(compareJson(links, "links.json"));
     }
 
     @Test
@@ -429,6 +489,12 @@ public class TestGitLabApiBeans {
     }
 
     @Test
+    public void testProjectGroups() throws Exception {
+        List<ProjectGroup> projectGroups = unmarshalResourceList(ProjectGroup.class, "project-groups.json");
+        assertTrue(compareJson(projectGroups, "project-groups.json"));
+    }
+
+    @Test
     public void testProjectLanguages() throws Exception {
         Map<String, Float> projectLanguages = unmarshalResourceMap(Float.class, "project-languages.json");
         assertTrue(compareJson(projectLanguages, "project-languages.json"));
@@ -486,6 +552,18 @@ public class TestGitLabApiBeans {
     public void testRegistryRepositories() throws Exception {
         List<RegistryRepository> repos = unmarshalResourceList(RegistryRepository.class, "registry-repositories.json");
         assertTrue(compareJson(repos, "registry-repositories.json"));
+    }
+
+    @Test
+    public void testRelatedEpicLink() throws Exception {
+        RelatedEpicLink relatedEpics = unmarshalResource(RelatedEpicLink.class, "related-epic-link.json");
+        assertTrue(compareJson(relatedEpics, "related-epic-link.json"));
+    }
+
+    @Test
+    public void testRelatedEpics() throws Exception {
+        List<RelatedEpic> relatedEpics = unmarshalResourceList(RelatedEpic.class, "related-epics.json");
+        assertTrue(compareJson(relatedEpics, "related-epics.json"));
     }
 
     @Test
@@ -577,6 +655,12 @@ public class TestGitLabApiBeans {
     public void testMergeRequestDiffs() throws Exception {
         List<MergeRequestDiff> diffs = unmarshalResourceList(MergeRequestDiff.class, "merge-request-diffs.json");
         assertTrue(compareJson(diffs, "merge-request-diffs.json"));
+    }
+
+    @Test
+    public void testMergeRequestVersions() throws Exception {
+        List<MergeRequestVersion> versions = unmarshalResourceList(MergeRequestVersion.class, "merge-request-versions.json");
+        assertTrue(compareJson(versions, "merge-request-diffs.json"));
     }
 
     @Test

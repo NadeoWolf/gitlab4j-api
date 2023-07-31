@@ -8,7 +8,10 @@ import org.gitlab4j.api.utils.JacksonJson;
 public class Pipeline {
 
     private Long id;
+    private Long iid;
+    private Long projectId;
     private PipelineStatus status;
+    private String source;
     private String ref;
     private String sha;
     private String beforeSha;
@@ -22,6 +25,7 @@ public class Pipeline {
     private Date committedAt;
     private String coverage;
     private Integer duration;
+    private Float queuedDuration;
     private String webUrl;
     private DetailedStatus detailedStatus;
 
@@ -33,12 +37,36 @@ public class Pipeline {
         this.id = id;
     }
 
+    public Long getIid() {
+        return iid;
+    }
+
+    public void setIid(Long iid) {
+        this.iid = iid;
+    }
+
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
+    }
+
     public PipelineStatus getStatus() {
         return status;
     }
 
     public void setStatus(PipelineStatus status) {
         this.status = status;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public String getRef() {
@@ -223,6 +251,14 @@ public class Pipeline {
 
     public void setDuration(Integer duration) {
         this.duration = duration;
+    }
+
+    public Float getQueuedDuration() {
+        return queuedDuration;
+    }
+
+    public void setQueuedDuration(Float queuedDuration) {
+        this.queuedDuration = queuedDuration;
     }
 
     public String getWebUrl() {
